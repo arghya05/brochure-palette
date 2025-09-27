@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Image as ImageIcon } from 'lucide-react';
@@ -10,9 +10,10 @@ import { ToolPanel } from './ToolPanel';
 interface BrochureCanvasProps {
   components: BrochureComponents | null;
   config: BrochureConfig | undefined;
+  onLayoutChange?: (modifiedComponents: BrochureComponents) => void;
 }
 
-export const BrochureCanvas: React.FC<BrochureCanvasProps> = ({ components, config }) => {
+export const BrochureCanvas: React.FC<BrochureCanvasProps> = ({ components, config, onLayoutChange }) => {
   const canvasTools = useCanvasTools();
   
   // Initialize component properties when components change
@@ -21,6 +22,37 @@ export const BrochureCanvas: React.FC<BrochureCanvasProps> = ({ components, conf
       canvasTools.initializeComponentProperties(components);
     }
   }, [components, canvasTools.initializeComponentProperties]);
+
+  // Create modified components with current positions, sizes, and properties
+  const getModifiedComponents = useCallback((): BrochureComponents | null => {
+    if (!components) return null;
+
+    const modifiedComponents = { ...components };
+    
+    // Apply position changes
+    Object.keys(canvasTools.componentPositions).forEach(componentName => {
+      if (modifiedComponents[componentName as keyof BrochureComponents] && 'position' in modifiedComponents[componentName as keyof BrochureComponents]) {
+        (modifiedComponents[componentName as keyof BrochureComponents] as any).position = canvasTools.componentPositions[componentName];
+      }
+    });
+
+    // Apply size changes
+    Object.keys(canvasTools.componentSizes).forEach(componentName => {
+      if (modifiedComponents[componentName as keyof BrochureComponents] && 'size' in modifiedComponents[componentName as keyof BrochureComponents]) {
+        (modifiedComponents[componentName as keyof BrochureComponents] as any).size = canvasTools.componentSizes[componentName];
+      }
+    });
+
+    return modifiedComponents;
+  }, [components, canvasTools.componentPositions, canvasTools.componentSizes]);
+
+  // Notify parent of layout changes
+  useEffect(() => {
+    const modifiedComponents = getModifiedComponents();
+    if (modifiedComponents && onLayoutChange) {
+      onLayoutChange(modifiedComponents);
+    }
+  }, [canvasTools.componentPositions, canvasTools.componentSizes, canvasTools.componentProperties, getModifiedComponents, onLayoutChange]);
 
   // Handle keyboard shortcuts
   useEffect(() => {

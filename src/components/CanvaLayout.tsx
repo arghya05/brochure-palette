@@ -13,6 +13,7 @@ export const CanvaLayout: React.FC = () => {
   const [productData, setProductData] = useState<BrochureData[]>([]);
   const [selectedSku, setSelectedSku] = useState<string>('');
   const [components, setComponents] = useState<BrochureComponents | null>(null);
+  const [modifiedComponents, setModifiedComponents] = useState<BrochureComponents | null>(null);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
 
@@ -116,6 +117,7 @@ export const CanvaLayout: React.FC = () => {
 
       const componentsData = await apiService.extractComponents(selectedConfig, selectedProduct);
       setComponents(componentsData);
+      setModifiedComponents(componentsData); // Initialize modified components
       
       toast({
         title: 'Success',
@@ -149,11 +151,15 @@ export const CanvaLayout: React.FC = () => {
       const selectedProduct = productData.find(p => p.sku === selectedSku);
       if (!selectedProduct) return;
 
+      // Use modified components if available for generation
+      const componentsToUse = modifiedComponents || components;
+
       await apiService.generateBrochure({
         config_id: selectedConfig,
         data: [selectedProduct],
         output_format: 'png',
         return_components: false,
+        layout: componentsToUse, // Pass modified layout using existing API property
       });
 
       toast({
@@ -185,6 +191,10 @@ export const CanvaLayout: React.FC = () => {
 
     try {
       setGenerating(true);
+      
+      // Use modified components if available for generation
+      const componentsToUse = modifiedComponents || components;
+      
       await apiService.generateCombinedBrochure({
         config_id: selectedConfig,
         data: productData.slice(0, combinedSettings.rows * combinedSettings.cols),
@@ -194,6 +204,7 @@ export const CanvaLayout: React.FC = () => {
         brochure_height: combinedSettings.height,
         spacing: combinedSettings.spacing,
         output_format: 'png',
+        layout: componentsToUse, // Pass modified layout using existing API property
       });
 
       toast({
@@ -251,6 +262,7 @@ export const CanvaLayout: React.FC = () => {
             <BrochureCanvas 
               components={components}
               config={currentConfig}
+              onLayoutChange={setModifiedComponents}
             />
           </main>
         </div>
