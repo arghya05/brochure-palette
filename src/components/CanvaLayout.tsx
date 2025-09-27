@@ -282,6 +282,15 @@ export const CanvaLayout: React.FC = () => {
             configurations={configurations}
             selectedConfig={selectedConfig}
             setSelectedConfig={setSelectedConfig}
+            currentConfig={currentConfig}
+            onUpdateConfig={(updatedConfig) => {
+              // Update the configurations array with the modified config
+              setConfigurations(prev => 
+                prev.map(config => 
+                  config.id === updatedConfig.id ? updatedConfig : config
+                )
+              );
+            }}
             productData={productData}
             selectedSku={selectedSku}
             setSelectedSku={setSelectedSku}
