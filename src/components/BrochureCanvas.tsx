@@ -114,7 +114,10 @@ export const BrochureCanvas: React.FC<BrochureCanvasProps> = ({ components, conf
           transform: `rotate(${properties.rotation}deg)`,
           zIndex: isDragging ? 20 : isSelected ? 10 : 1,
         }}
-        onMouseDown={(e) => canvasTools.handleMouseDown(e, componentName, components!)}
+        onMouseDown={(e) => {
+          e.stopPropagation(); // Prevent canvas deselection
+          canvasTools.handleMouseDown(e, componentName, components!);
+        }}
       >
         <img
           src={`data:image/${component.format};base64,${component.image_base64}`}
@@ -197,7 +200,12 @@ export const BrochureCanvas: React.FC<BrochureCanvasProps> = ({ components, conf
               onMouseMove={canvasTools.handleMouseMove}
               onMouseUp={canvasTools.handleMouseUp}
               onMouseLeave={canvasTools.handleMouseUp}
-              onClick={() => canvasTools.setSelectedComponent(null)}
+              onClick={(e) => {
+                // Only deselect if clicking on empty canvas area
+                if (e.target === e.currentTarget) {
+                  canvasTools.setSelectedComponent(null);
+                }
+              }}
             >
               {/* Background */}
               {components.background && renderComponent('background', components.background)}
