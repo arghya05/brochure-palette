@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
-import { toast } from '@/hooks/use-toast';
 import { apiService } from '@/services/api';
+import { toast } from '@/hooks/use-toast';
 import type { BrochureConfig, BrochureData, BrochureComponents } from '@/types/api';
 import { AppSidebar } from './AppSidebar';
 import { CanvaTopbar } from './CanvaTopbar';
@@ -283,13 +283,20 @@ export const CanvaLayout: React.FC = () => {
             selectedConfig={selectedConfig}
             setSelectedConfig={setSelectedConfig}
             currentConfig={currentConfig}
-            onUpdateConfig={(updatedConfig) => {
+            onUpdateConfig={async (updatedConfig) => {
               // Update the configurations array with the modified config
               setConfigurations(prev => 
                 prev.map(config => 
                   config.id === updatedConfig.id ? updatedConfig : config
                 )
               );
+              
+              // Save changes to backend using apiService
+              try {
+                await apiService.updateConfiguration(updatedConfig);
+              } catch (error) {
+                console.error('Failed to update configuration:', error);
+              }
             }}
             productData={productData}
             selectedSku={selectedSku}

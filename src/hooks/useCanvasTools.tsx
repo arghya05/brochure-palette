@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 import type { BrochureComponents } from '@/types/api';
 import { useCanvasHistory } from './useCanvasHistory';
+import { DEFAULT_CONFIG, COMPONENT_DEFAULTS } from '@/constants/defaults';
 
 export type CanvasToolType = 'select' | 'draw' | 'rectangle' | 'circle' | 'text' | 'path';
 
@@ -81,9 +82,9 @@ export const useCanvasTools = () => {
           visible: true,
           ...((['arabic_text', 'english_text'].includes(key)) && {
             textProperties: {
-              fontSize: 24,
-              color: '#231f20',
-              maxWidth: 16
+              fontSize: COMPONENT_DEFAULTS.TEXT_PROPERTIES.FONT_SIZE,
+              color: COMPONENT_DEFAULTS.TEXT_PROPERTIES.COLOR,
+              maxWidth: COMPONENT_DEFAULTS.TEXT_PROPERTIES.MAX_WIDTH
             }
           })
         };

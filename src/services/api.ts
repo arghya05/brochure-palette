@@ -34,6 +34,16 @@ class ApiService {
     return response.json();
   }
 
+  async updateConfiguration(config: BrochureConfig): Promise<BrochureConfig> {
+    const response = await fetch(`${API_BASE}/configurations/${config.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(config),
+    });
+    if (!response.ok) throw new Error('Failed to update configuration');
+    return response.json();
+  }
+
   // Data endpoints
   async getAllData(): Promise<{ data: BrochureData[] }> {
     const response = await fetch(`${API_BASE}/data`);
