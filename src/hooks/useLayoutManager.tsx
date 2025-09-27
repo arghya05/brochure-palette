@@ -136,11 +136,10 @@ export const useLayoutManager = () => {
     componentProperties: Record<string, ComponentProperties>
   ) => {
     try {
-      // Import the API service dynamically to avoid circular dependencies
-      const { apiService } = await import('@/services/api');
+      const API_BASE = 'http://localhost:8000';
       
       // Convert layout data to BrochureConfig format
-      const config = {
+      const newConfig = {
         name,
         fonts: {
           arabic_regular_size: 16,
@@ -197,8 +196,16 @@ export const useLayoutManager = () => {
         grid_background_color: [245, 245, 245] as [number, number, number],
       };
 
-      // Create the configuration via API
-      await apiService.createConfiguration(config);
+      // Use the exact fetch format provided by user
+      const response = await fetch(`${API_BASE}/configurations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newConfig)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       
       // Also save the layout data for reference
       const layout: LayoutData = {
