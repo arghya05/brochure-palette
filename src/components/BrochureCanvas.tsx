@@ -10,7 +10,7 @@ import { ToolPanel } from './ToolPanel';
 interface BrochureCanvasProps {
   components: BrochureComponents | null;
   config: BrochureConfig | undefined;
-  onLayoutChange?: (modifiedComponents: BrochureComponents) => void;
+  onLayoutChange?: (modifiedComponents: BrochureComponents, componentProperties: Record<string, any>) => void;
 }
 
 export const BrochureCanvas: React.FC<BrochureCanvasProps> = ({ components, config, onLayoutChange }) => {
@@ -50,7 +50,7 @@ export const BrochureCanvas: React.FC<BrochureCanvasProps> = ({ components, conf
   useEffect(() => {
     const modifiedComponents = getModifiedComponents();
     if (modifiedComponents && onLayoutChange) {
-      onLayoutChange(modifiedComponents);
+      onLayoutChange(modifiedComponents, canvasTools.componentProperties);
     }
   }, [canvasTools.componentPositions, canvasTools.componentSizes, canvasTools.componentProperties, getModifiedComponents, onLayoutChange]);
 

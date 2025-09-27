@@ -14,6 +14,7 @@ export const CanvaLayout: React.FC = () => {
   const [selectedSku, setSelectedSku] = useState<string>('');
   const [components, setComponents] = useState<BrochureComponents | null>(null);
   const [modifiedComponents, setModifiedComponents] = useState<BrochureComponents | null>(null);
+  const [componentProperties, setComponentProperties] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
 
@@ -146,22 +147,24 @@ export const CanvaLayout: React.FC = () => {
       if (key === 'brochure_dimensions') return; // Skip dimensions
       
       if (component && typeof component === 'object' && 'position' in component) {
+        const props = componentProperties[key] || {};
+        
         layout[key] = {
           x: component.position[0],
           y: component.position[1],
           width: component.size[0],
           height: component.size[1],
-          opacity: 1,
-          rotation: 0,
-          visible: true,
+          opacity: props.opacity ?? 1,
+          rotation: props.rotation ?? 0,
+          visible: props.visible ?? true,
         };
         
-        // Add text properties for text components
-        if (key.includes('text')) {
+        // Add text properties for text components using actual values
+        if (key.includes('text') && props.textProperties) {
           layout[key].textProperties = {
-            maxWidth: 16,
-            fontSize: 24,
-            color: "#231f20"
+            maxWidth: props.textProperties.maxWidth ?? 16,
+            fontSize: props.textProperties.fontSize ?? 24,
+            color: props.textProperties.color ?? "#231f20"
           };
         }
       }
@@ -298,7 +301,10 @@ export const CanvaLayout: React.FC = () => {
             <BrochureCanvas 
               components={components}
               config={currentConfig}
-              onLayoutChange={setModifiedComponents}
+              onLayoutChange={(modifiedComponents, properties) => {
+                setModifiedComponents(modifiedComponents);
+                setComponentProperties(properties);
+              }}
             />
           </main>
         </div>
