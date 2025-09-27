@@ -11,7 +11,8 @@ import {
   Download, 
   Upload, 
   Trash2,
-  Calendar
+  Calendar,
+  Settings
 } from 'lucide-react';
 import { useLayoutManager } from '@/hooks/useLayoutManager';
 import type { ComponentProperties } from '@/hooks/useCanvasTools';
@@ -35,8 +36,10 @@ export const LayoutManager: React.FC<LayoutManagerProps> = ({
 }) => {
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [loadDialogOpen, setLoadDialogOpen] = useState(false);
+  const [configDialogOpen, setConfigDialogOpen] = useState(false);
   const [layoutName, setLayoutName] = useState('');
-  const { saveLayout, loadLayout, getSavedLayouts, deleteLayout, exportLayout, importLayout } = useLayoutManager();
+  const [configName, setConfigName] = useState('');
+  const { saveLayout, loadLayout, getSavedLayouts, deleteLayout, exportLayout, importLayout, makeAsConfig } = useLayoutManager();
 
   const handleSave = () => {
     if (layoutName.trim()) {
@@ -73,6 +76,14 @@ export const LayoutManager: React.FC<LayoutManagerProps> = ({
       });
     }
     event.target.value = '';
+  };
+
+  const handleMakeAsConfig = () => {
+    if (configName.trim()) {
+      makeAsConfig(configName.trim(), componentPositions, componentSizes, componentProperties);
+      setConfigName('');
+      setConfigDialogOpen(false);
+    }
   };
 
   const savedLayouts = getSavedLayouts();
@@ -155,6 +166,38 @@ export const LayoutManager: React.FC<LayoutManagerProps> = ({
                 </Card>
               ))
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Separator orientation="vertical" className="h-6 mx-1" />
+
+      {/* Make as Config */}
+      <Dialog open={configDialogOpen} onOpenChange={setConfigDialogOpen}>
+        <DialogTrigger asChild>
+          <Button variant="tool" size="tool" title="Make as Config">
+            <Settings className="h-4 w-4" />
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Make as Configuration</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Input
+              placeholder="Enter configuration name..."
+              value={configName}
+              onChange={(e) => setConfigName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleMakeAsConfig()}
+            />
+            <div className="flex gap-2">
+              <Button onClick={handleMakeAsConfig} disabled={!configName.trim()}>
+                Create Config
+              </Button>
+              <Button variant="outline" onClick={() => setConfigDialogOpen(false)}>
+                Cancel
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

@@ -129,12 +129,41 @@ export const useLayoutManager = () => {
     });
   }, []);
 
+  const makeAsConfig = useCallback((
+    name: string,
+    componentPositions: Record<string, [number, number]>,
+    componentSizes: Record<string, [number, number]>,
+    componentProperties: Record<string, ComponentProperties>
+  ) => {
+    const layout: LayoutData = {
+      name,
+      componentPositions: { ...componentPositions },
+      componentSizes: { ...componentSizes },
+      componentProperties: { ...componentProperties },
+      timestamp: Date.now()
+    };
+
+    // Save directly as configuration for brochure designer
+    const configs = JSON.parse(localStorage.getItem('brochureConfigs') || '[]');
+    const configLayout = {
+      id: `config_${Date.now()}`,
+      name,
+      layout: layout,
+      timestamp: Date.now()
+    };
+    configs.push(configLayout);
+    localStorage.setItem('brochureConfigs', JSON.stringify(configs));
+    
+    toast.success(`Configuration "${name}" created from layout`);
+  }, []);
+
   return {
     saveLayout,
     loadLayout,
     getSavedLayouts,
     deleteLayout,
     exportLayout,
-    importLayout
+    importLayout,
+    makeAsConfig
   };
 };
