@@ -107,8 +107,8 @@ export const AppSidebar: React.FC<AppSidebarProps> = (props) => {
                   <SelectValue placeholder="Choose SKU..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {props.productData.map(product => (
-                    <SelectItem key={product.sku} value={product.sku}>{product.sku}</SelectItem>
+                  {props.productData.map((product, index) => (
+                    <SelectItem key={`${product.sku}-${index}`} value={product.sku}>{product.sku}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
