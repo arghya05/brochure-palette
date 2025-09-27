@@ -149,8 +149,8 @@ export const useCanvasTools = () => {
       const deltaX = e.clientX - dragState.startPos.x;
       const deltaY = e.clientY - dragState.startPos.y;
       
-      const newX = dragState.componentStartPos.x + deltaX;
-      const newY = dragState.componentStartPos.y + deltaY;
+      const newX = Math.round(dragState.componentStartPos.x + deltaX);
+      const newY = Math.round(dragState.componentStartPos.y + deltaY);
       
       setComponentPositions(prev => ({
         ...prev,
@@ -168,26 +168,26 @@ export const useCanvasTools = () => {
       
       switch (resizeState.resizeHandle) {
         case 'se': // Southeast handle
-          newWidth = Math.max(50, resizeState.componentStartSize.width + deltaX);
-          newHeight = Math.max(50, resizeState.componentStartSize.height + deltaY);
+          newWidth = Math.max(50, Math.round(resizeState.componentStartSize.width + deltaX));
+          newHeight = Math.max(50, Math.round(resizeState.componentStartSize.height + deltaY));
           break;
         case 'sw': // Southwest handle
-          newWidth = Math.max(50, resizeState.componentStartSize.width - deltaX);
-          newHeight = Math.max(50, resizeState.componentStartSize.height + deltaY);
+          newWidth = Math.max(50, Math.round(resizeState.componentStartSize.width - deltaX));
+          newHeight = Math.max(50, Math.round(resizeState.componentStartSize.height + deltaY));
           break;
         case 'ne': // Northeast handle
-          newWidth = Math.max(50, resizeState.componentStartSize.width + deltaX);
-          newHeight = Math.max(50, resizeState.componentStartSize.height - deltaY);
+          newWidth = Math.max(50, Math.round(resizeState.componentStartSize.width + deltaX));
+          newHeight = Math.max(50, Math.round(resizeState.componentStartSize.height - deltaY));
           break;
         case 'nw': // Northwest handle
-          newWidth = Math.max(50, resizeState.componentStartSize.width - deltaX);
-          newHeight = Math.max(50, resizeState.componentStartSize.height - deltaY);
+          newWidth = Math.max(50, Math.round(resizeState.componentStartSize.width - deltaX));
+          newHeight = Math.max(50, Math.round(resizeState.componentStartSize.height - deltaY));
           break;
       }
       
       setComponentSizes(prev => ({
         ...prev,
-        [resizeState.resizeComponent!]: [newWidth, newHeight]
+        [resizeState.resizeComponent!]: [Math.round(newWidth), Math.round(newHeight)]
       }));
     }
   }, [dragState, resizeState, canvasState.activeTool]);
@@ -331,19 +331,19 @@ export const useCanvasTools = () => {
         newPos[0] = 0;
         break;
       case 'center-h':
-        newPos[0] = (canvasWidth - currentSize[0]) / 2;
+        newPos[0] = Math.round((canvasWidth - currentSize[0]) / 2);
         break;
       case 'right':
-        newPos[0] = canvasWidth - currentSize[0];
+        newPos[0] = Math.round(canvasWidth - currentSize[0]);
         break;
       case 'top':
         newPos[1] = 0;
         break;
       case 'center-v':
-        newPos[1] = (canvasHeight - currentSize[1]) / 2;
+        newPos[1] = Math.round((canvasHeight - currentSize[1]) / 2);
         break;
       case 'bottom':
-        newPos[1] = canvasHeight - currentSize[1];
+        newPos[1] = Math.round(canvasHeight - currentSize[1]);
         break;
     }
 
@@ -363,8 +363,8 @@ export const useCanvasTools = () => {
     const currentSize = getComponentSize(canvasState.selectedComponent, components);
 
     const newPos: [number, number] = [
-      (canvasWidth - currentSize[0]) / 2,
-      (canvasHeight - currentSize[1]) / 2
+      Math.round((canvasWidth - currentSize[0]) / 2),
+      Math.round((canvasHeight - currentSize[1]) / 2)
     ];
 
     setComponentPositions(prev => ({
@@ -402,7 +402,7 @@ export const useCanvasTools = () => {
 
     setComponentPositions(prev => ({
       ...prev,
-      [newName]: [copiedComponent.position[0] + offset, copiedComponent.position[1] + offset]
+      [newName]: [Math.round(copiedComponent.position[0] + offset), Math.round(copiedComponent.position[1] + offset)]
     }));
 
     setComponentSizes(prev => ({
@@ -424,12 +424,12 @@ export const useCanvasTools = () => {
     
     setComponentPositions(prev => ({
       ...prev,
-      [newName]: position
+      [newName]: [Math.round(position[0]), Math.round(position[1])]
     }));
 
     setComponentSizes(prev => ({
       ...prev,
-      [newName]: size
+      [newName]: [Math.round(size[0]), Math.round(size[1])]
     }));
 
     setComponentProperties(prev => ({

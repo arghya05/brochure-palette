@@ -6,10 +6,10 @@ export const useGridSystem = () => {
   const [gridSize, setGridSize] = useState(20);
 
   const snapToGridPosition = useCallback((x: number, y: number): [number, number] => {
-    if (!snapToGrid) return [x, y];
+    if (!snapToGrid) return [Math.round(x), Math.round(y)];
     
-    const snappedX = Math.round(x / gridSize) * gridSize;
-    const snappedY = Math.round(y / gridSize) * gridSize;
+    const snappedX = Math.round(Math.round(x) / gridSize) * gridSize;
+    const snappedY = Math.round(Math.round(y) / gridSize) * gridSize;
     
     return [snappedX, snappedY];
   }, [snapToGrid, gridSize]);

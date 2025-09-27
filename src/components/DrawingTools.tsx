@@ -22,8 +22,8 @@ export const DrawingTools: React.FC<DrawingToolsProps> = ({
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return;
 
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const x = Math.round(e.clientX - rect.left);
+    const y = Math.round(e.clientY - rect.top);
     
     setIsDrawing(true);
     setStartPos({ x, y });
@@ -36,8 +36,8 @@ export const DrawingTools: React.FC<DrawingToolsProps> = ({
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return;
 
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const x = Math.round(e.clientX - rect.left);
+    const y = Math.round(e.clientY - rect.top);
     
     setCurrentPos({ x, y });
   }, [isDrawing, startPos]);
@@ -45,14 +45,14 @@ export const DrawingTools: React.FC<DrawingToolsProps> = ({
   const handleMouseUp = useCallback(() => {
     if (!isDrawing || !startPos || !currentPos) return;
 
-    const width = Math.abs(currentPos.x - startPos.x);
-    const height = Math.abs(currentPos.y - startPos.y);
+    const width = Math.round(Math.abs(currentPos.x - startPos.x));
+    const height = Math.round(Math.abs(currentPos.y - startPos.y));
     
     // Only create if the shape is big enough
     if (width > 10 && height > 10) {
       const position: [number, number] = [
-        Math.min(startPos.x, currentPos.x),
-        Math.min(startPos.y, currentPos.y)
+        Math.round(Math.min(startPos.x, currentPos.x)),
+        Math.round(Math.min(startPos.y, currentPos.y))
       ];
       const size: [number, number] = [width, height];
       
