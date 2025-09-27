@@ -85,75 +85,12 @@ export const AppSidebar: React.FC<AppSidebarProps> = (props) => {
                 <Button variant="tool" size="sm" onClick={props.onLoadConfigurations}>
                   <RefreshCw className="h-3 w-3" />
                 </Button>
-                <Button variant="primary" size="sm" onClick={async () => {
+                <Button variant="primary" size="sm" onClick={() => {
+                  // Create new configuration functionality
                   const newConfigName = prompt('Enter configuration name:');
                   if (newConfigName?.trim()) {
-                    try {
-                      const { apiService } = await import('@/services/api');
-                      
-                      const newConfig = {
-                        name: newConfigName.trim(),
-                        fonts: {
-                          arabic_regular_size: 16,
-                          arabic_bold_size: 18,
-                          english_regular_size: 14,
-                          english_bold_size: 16,
-                          english_bold_price_strike_size: 12,
-                          english_bold_price_size: 14,
-                        },
-                        dimensions: { width: 400, height: 600 },
-                        grid: { cols: 1, rows: 1, spacing: 10 },
-                        text: {
-                          arabic_x: 50,
-                          arabic_y_offset: 100,
-                          arabic_max_width: 300,
-                          arabic_color: [0, 0, 0] as [number, number, number],
-                          english_x: 50,
-                          english_y_offset: 150,
-                          english_max_width: 300,
-                          english_color: [0, 0, 0] as [number, number, number],
-                        },
-                        product_image: {
-                          max_width: 200,
-                          max_height: 200,
-                          center_x_offset: 0,
-                          center_y_offset: 0,
-                        },
-                        price_tag: {
-                          width: 80,
-                          height: 30,
-                          x_offset: 10,
-                          y_offset: 10,
-                          corner_radius: 5,
-                          background_color: [255, 255, 255] as [number, number, number],
-                          regular_price_x_offset: 5,
-                          regular_price_y_offset: 5,
-                          regular_price_color: [128, 128, 128] as [number, number, number],
-                          strike_line_color: [255, 0, 0] as [number, number, number],
-                          strike_line_width: 2,
-                          promo_price_x_offset: 5,
-                          promo_price_y_offset: 15,
-                          promo_price_color: [255, 0, 0] as [number, number, number],
-                        },
-                        icon: {
-                          size: 40,
-                          x_offset: 20,
-                          y_offset: 20,
-                          background_circle_radius_offset: 5,
-                          background_color: [240, 240, 240] as [number, number, number],
-                          border_color: [200, 200, 200] as [number, number, number],
-                          border_width: 2,
-                        },
-                        background_color: [255, 255, 255] as [number, number, number],
-                        grid_background_color: [245, 245, 245] as [number, number, number],
-                      };
-
-                      await apiService.createConfiguration(newConfig);
-                      props.onLoadConfigurations();
-                      console.log('Configuration created successfully');
-                    } catch (error) {
-                      console.error('Failed to create configuration:', error);
-                    }
+                    // This would integrate with API to create new config
+                    console.log('Creating new config:', newConfigName.trim());
                   }
                 }}>New</Button>
               </div>
