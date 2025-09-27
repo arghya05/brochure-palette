@@ -30,10 +30,13 @@ export interface ResizeState {
 }
 
 export const useCanvasTools = () => {
-  const [activeTool, setActiveTool] = useState<CanvasToolType>('select');
-  const [selectedComponent, setSelectedComponent] = useState<string | null>(null);
-  const [zoom, setZoom] = useState(100);
-  
+  // Initialize all state at once to avoid React queue issues
+  const [canvasState, setCanvasState] = useState({
+    activeTool: 'select' as CanvasToolType,
+    selectedComponent: null as string | null,
+    zoom: 100,
+  });
+
   const [dragState, setDragState] = useState<DragState>({
     isDragging: false,
     dragComponent: null,
@@ -54,6 +57,10 @@ export const useCanvasTools = () => {
   const [componentProperties, setComponentProperties] = useState<Record<string, ComponentProperties>>({});
 
   const canvasRef = useRef<HTMLDivElement>(null);
+
+  // Helper functions
+  const setActiveTool = (tool: CanvasToolType) => setCanvasState(prev => ({ ...prev, activeTool: tool }));
+  const setSelectedComponent = (component: string | null) => setCanvasState(prev => ({ ...prev, selectedComponent: component }));
 
   const initializeComponentProperties = useCallback((components: BrochureComponents) => {
     const initialProperties: Record<string, ComponentProperties> = {};
@@ -82,12 +89,12 @@ export const useCanvasTools = () => {
   }, []);
 
   const handleMouseDown = useCallback((e: React.MouseEvent, componentName: string, components: BrochureComponents) => {
-    if (activeTool !== 'select') return;
+    if (canvasState.activeTool !== 'select') return;
     
     e.preventDefault();
     e.stopPropagation();
     
-    setSelectedComponent(componentName);
+    setCanvasState(prev => ({ ...prev, selectedComponent: componentName }));
     
     if (!components || !components[componentName as keyof BrochureComponents]) return;
     
@@ -102,10 +109,10 @@ export const useCanvasTools = () => {
       startPos: { x: e.clientX, y: e.clientY },
       componentStartPos: { x: currentPos[0], y: currentPos[1] }
     });
-  }, [activeTool, componentPositions]);
+  }, [canvasState.activeTool, componentPositions]);
 
   const handleResizeMouseDown = useCallback((e: React.MouseEvent, componentName: string, handle: 'nw' | 'ne' | 'sw' | 'se', components: BrochureComponents) => {
-    if (activeTool !== 'select') return;
+    if (canvasState.activeTool !== 'select') return;
     
     e.preventDefault();
     e.stopPropagation();
@@ -124,10 +131,10 @@ export const useCanvasTools = () => {
       startPos: { x: e.clientX, y: e.clientY },
       componentStartSize: { width: currentSize[0], height: currentSize[1] }
     });
-  }, [activeTool, componentSizes]);
+  }, [canvasState.activeTool, componentSizes]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (activeTool !== 'select') return;
+    if (canvasState.activeTool !== 'select') return;
     
     // Handle dragging
     if (dragState.isDragging && dragState.dragComponent) {
@@ -175,7 +182,7 @@ export const useCanvasTools = () => {
         [resizeState.resizeComponent!]: [newWidth, newHeight]
       }));
     }
-  }, [dragState, resizeState, activeTool]);
+  }, [dragState, resizeState, canvasState.activeTool]);
 
   const handleMouseUp = useCallback(() => {
     setDragState({
@@ -238,10 +245,10 @@ export const useCanvasTools = () => {
       }
       return newProps;
     });
-    if (selectedComponent === componentName) {
+    if (canvasState.selectedComponent === componentName) {
       setSelectedComponent(null);
     }
-  }, [selectedComponent]);
+  }, [canvasState.selectedComponent]);
 
   const duplicateComponent = useCallback((componentName: string) => {
     const currentPos = componentPositions[componentName];
@@ -253,37 +260,25 @@ export const useCanvasTools = () => {
     }
   }, [componentPositions]);
 
-  const handleZoomIn = useCallback(() => {
-    setZoom(prev => Math.min(prev + 25, 200));
-  }, []);
-
-  const handleZoomOut = useCallback(() => {
-    setZoom(prev => Math.max(prev - 25, 25));
-  }, []);
-
-  const handleFitToScreen = useCallback(() => {
-    setZoom(100);
-  }, []);
-
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (!selectedComponent) return;
+    if (!canvasState.selectedComponent) return;
     
     switch (e.key) {
       case 'Delete':
       case 'Backspace':
-        deleteComponent(selectedComponent);
+        deleteComponent(canvasState.selectedComponent);
         break;
       case 'Escape':
         setSelectedComponent(null);
         break;
     }
-  }, [selectedComponent, deleteComponent]);
+  }, [canvasState.selectedComponent, deleteComponent]);
 
   return {
     // State
-    activeTool,
-    selectedComponent,
-    zoom,
+    activeTool: canvasState.activeTool,
+    selectedComponent: canvasState.selectedComponent,
+    zoom: canvasState.zoom,
     dragState,
     resizeState,
     componentPositions,
@@ -305,9 +300,9 @@ export const useCanvasTools = () => {
     getComponentSize,
     deleteComponent,
     duplicateComponent,
-    handleZoomIn,
-    handleZoomOut,
-    handleFitToScreen,
+    handleZoomIn: () => setCanvasState(prev => ({ ...prev, zoom: Math.min(prev.zoom + 25, 200) })),
+    handleZoomOut: () => setCanvasState(prev => ({ ...prev, zoom: Math.max(prev.zoom - 25, 25) })),
+    handleFitToScreen: () => setCanvasState(prev => ({ ...prev, zoom: 100 })),
     handleKeyDown
   };
 };

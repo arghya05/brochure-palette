@@ -187,7 +187,7 @@ export const ImageGenerationAgent: React.FC = () => {
                     <SelectContent>
                       {productData.map(product => (
                         <SelectItem key={product.sku} value={product.sku}>
-                          {product.sku} - {product.english_description.slice(0, 40)}...
+                          {product.sku} - {(product.english_description || '').slice(0, 40)}...
                         </SelectItem>
                       ))}
                     </SelectContent>
