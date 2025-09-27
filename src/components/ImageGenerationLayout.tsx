@@ -214,14 +214,14 @@ export const ImageGenerationLayout: React.FC = () => {
           onGenerateCombined={generateCombinedImage}
         />
 
-        <main className="flex-1 flex flex-col bg-muted/30 overflow-hidden">
+        <div className="flex flex-col flex-1 w-full">
           <CanvaTopbar 
             selectedConfig=""
             selectedSku={selectedProducts[0]?.sku || ''}
             configName="AI Image Generation"
           />
 
-          <div className="flex-1 overflow-hidden">
+          <main className="flex-1 bg-muted/30 overflow-hidden">
             <ImageGenerationCanvas 
               generatedImage={generatedImage}
               imageSettings={imageSettings}
@@ -229,8 +229,8 @@ export const ImageGenerationLayout: React.FC = () => {
               generationType={generationType}
               generating={generating}
             />
-          </div>
-        </main>
+          </main>
+        </div>
       </div>
     </SidebarProvider>
   );
