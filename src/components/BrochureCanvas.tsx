@@ -1,9 +1,11 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useEffect } from 'react';
 import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ZoomIn, ZoomOut, RotateCcw, Move, Square, Circle, Type, Image as ImageIcon } from 'lucide-react';
+import { Image as ImageIcon } from 'lucide-react';
 import type { BrochureComponents, BrochureConfig } from '@/types/api';
+import { useCanvasTools } from '@/hooks/useCanvasTools';
+import { PropertyPanel } from './PropertyPanel';
+import { ToolPanel } from './ToolPanel';
 
 interface BrochureCanvasProps {
   components: BrochureComponents | null;
@@ -11,69 +13,137 @@ interface BrochureCanvasProps {
 }
 
 export const BrochureCanvas: React.FC<BrochureCanvasProps> = ({ components, config }) => {
-  const [dragState, setDragState] = useState<{
-    isDragging: boolean;
-    dragComponent: string | null;
-    startPos: { x: number; y: number };
-    componentStartPos: { x: number; y: number };
-  }>({
-    isDragging: false,
-    dragComponent: null,
-    startPos: { x: 0, y: 0 },
-    componentStartPos: { x: 0, y: 0 }
-  });
+  const canvasTools = useCanvasTools();
+  
+  // Initialize component properties when components change
+  useEffect(() => {
+    if (components) {
+      canvasTools.initializeComponentProperties(components);
+    }
+  }, [components, canvasTools.initializeComponentProperties]);
 
-  const [componentPositions, setComponentPositions] = useState<Record<string, [number, number]>>({});
-  const canvasRef = useRef<HTMLDivElement>(null);
+  // Handle keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Tool shortcuts
+      switch (e.key.toLowerCase()) {
+        case 'v':
+          canvasTools.setActiveTool('select');
+          break;
+        case 'p':
+          canvasTools.setActiveTool('draw');
+          break;
+        case 'r':
+          canvasTools.setActiveTool('rectangle');
+          break;
+        case 'c':
+          canvasTools.setActiveTool('circle');
+          break;
+        case 't':
+          canvasTools.setActiveTool('text');
+          break;
+        case '=':
+        case '+':
+          canvasTools.handleZoomIn();
+          break;
+        case '-':
+          canvasTools.handleZoomOut();
+          break;
+        case '0':
+          canvasTools.handleFitToScreen();
+          break;
+        default:
+          canvasTools.handleKeyDown(e);
+      }
+    };
 
-  const handleMouseDown = useCallback((e: React.MouseEvent, componentName: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (!components || !components[componentName as keyof BrochureComponents]) return;
-    
-    const component = components[componentName as keyof BrochureComponents];
-    if (!component || !('position' in component)) return;
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [canvasTools]);
 
-    const currentPos = componentPositions[componentName] || component.position;
+  const renderComponent = (componentName: string, component: any) => {
+    if (!component || !('position' in component)) return null;
     
-    setDragState({
-      isDragging: true,
-      dragComponent: componentName,
-      startPos: { x: e.clientX, y: e.clientY },
-      componentStartPos: { x: currentPos[0], y: currentPos[1] }
-    });
-  }, [components, componentPositions]);
-
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!dragState.isDragging || !dragState.dragComponent) return;
+    const position = canvasTools.getComponentPosition(componentName, components!);
+    const properties = canvasTools.componentProperties[componentName] || {
+      opacity: 1,
+      rotation: 0,
+      visible: true
+    };
     
-    const deltaX = e.clientX - dragState.startPos.x;
-    const deltaY = e.clientY - dragState.startPos.y;
+    if (!properties.visible) return null;
     
-    const newX = dragState.componentStartPos.x + deltaX;
-    const newY = dragState.componentStartPos.y + deltaY;
+    const isSelected = canvasTools.selectedComponent === componentName;
+    const isDragging = canvasTools.dragState.dragComponent === componentName;
     
-    setComponentPositions(prev => ({
-      ...prev,
-      [dragState.dragComponent!]: [newX, newY]
-    }));
-  }, [dragState]);
-
-  const handleMouseUp = useCallback(() => {
-    setDragState({
-      isDragging: false,
-      dragComponent: null,
-      startPos: { x: 0, y: 0 },
-      componentStartPos: { x: 0, y: 0 }
-    });
-  }, []);
-
-  const getComponentPosition = (componentName: string) => {
-    if (!components) return [0, 0];
-    const component = components[componentName as keyof BrochureComponents];
-    if (!component || !('position' in component)) return [0, 0];
-    return componentPositions[componentName] || component.position;
+    // Color coding for different component types
+    const getBorderColor = () => {
+      switch (componentName) {
+        case 'product_image': return 'border-primary/20 hover:border-primary';
+        case 'arabic_text':
+        case 'english_text': return 'border-accent/20 hover:border-accent';
+        case 'price_tag': return 'border-success/20 hover:border-success';
+        case 'icon': return 'border-secondary/40 hover:border-secondary';
+        default: return 'border-muted/20 hover:border-muted';
+      }
+    };
+    
+    const getSelectedBorderColor = () => {
+      switch (componentName) {
+        case 'product_image': return 'border-primary';
+        case 'arabic_text':
+        case 'english_text': return 'border-accent';
+        case 'price_tag': return 'border-success';
+        case 'icon': return 'border-secondary';
+        default: return 'border-muted';
+      }
+    };
+    
+    return (
+      <div
+        key={componentName}
+        className={`absolute border-2 transition-all duration-200 cursor-move group ${
+          isSelected ? `${getSelectedBorderColor()} shadow-lg z-10` : getBorderColor()
+        } ${componentName.includes('price_tag') || componentName.includes('icon') ? 'rounded-full' : 'rounded'}`}
+        style={{
+          left: position[0],
+          top: position[1],
+          width: component.size[0],
+          height: component.size[1],
+          opacity: properties.opacity,
+          transform: `rotate(${properties.rotation}deg)`,
+          zIndex: isDragging ? 20 : isSelected ? 10 : 1,
+        }}
+        onMouseDown={(e) => canvasTools.handleMouseDown(e, componentName, components!)}
+      >
+        <img
+          src={`data:image/${component.format};base64,${component.image_base64}`}
+          alt={componentName}
+          className={`w-full h-full object-cover ${
+            componentName.includes('price_tag') || componentName.includes('icon') ? 'rounded-full' : 'rounded'
+          }`}
+          style={{ pointerEvents: 'none' }}
+        />
+        
+        {/* Selection Handles */}
+        {isSelected && (
+          <>
+            <div className={`absolute -top-1 -left-1 w-3 h-3 bg-primary border-2 border-white rounded-full transition-opacity`} />
+            <div className={`absolute -top-1 -right-1 w-3 h-3 bg-primary border-2 border-white rounded-full transition-opacity`} />
+            <div className={`absolute -bottom-1 -left-1 w-3 h-3 bg-primary border-2 border-white rounded-full transition-opacity`} />
+            <div className={`absolute -bottom-1 -right-1 w-3 h-3 bg-primary border-2 border-white rounded-full transition-opacity`} />
+          </>
+        )}
+        
+        {/* Hover Handles */}
+        {!isSelected && (
+          <>
+            <div className={`absolute -top-1 -left-1 w-3 h-3 bg-primary border-2 border-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity`} />
+            <div className={`absolute -bottom-1 -right-1 w-3 h-3 bg-primary border-2 border-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity`} />
+          </>
+        )}
+      </div>
+    );
   };
   if (!components || !config) {
     return (
@@ -98,216 +168,66 @@ export const BrochureCanvas: React.FC<BrochureCanvasProps> = ({ components, conf
   const canvasHeight = components.brochure_dimensions[1];
 
   return (
-    <div className="flex-1 flex flex-col h-full">
-      {/* Canvas Toolbar */}
-      <div className="h-12 bg-panel-bg border-b border-panel-border flex items-center justify-between px-4">
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="text-xs">
-            {canvasWidth} × {canvasHeight}
-          </Badge>
-          <Badge variant="secondary" className="text-xs">
-            {config.name}
-          </Badge>
-        </div>
-        
-        <div className="flex items-center gap-1">
-          <Button variant="tool" size="tool" title="Select">
-            <Move className="h-4 w-4" />
-          </Button>
-          <Button variant="tool" size="tool" title="Rectangle">
-            <Square className="h-4 w-4" />
-          </Button>
-          <Button variant="tool" size="tool" title="Circle">
-            <Circle className="h-4 w-4" />
-          </Button>
-          <Button variant="tool" size="tool" title="Text">
-            <Type className="h-4 w-4" />
-          </Button>
-        </div>
+    <div className="flex-1 flex h-full">
+      {/* Main Canvas Area */}
+      <div className="flex-1 flex flex-col">
+        {/* Tool Panel */}
+        <ToolPanel
+          activeTool={canvasTools.activeTool}
+          onToolChange={canvasTools.setActiveTool}
+          zoom={canvasTools.zoom}
+          onZoomIn={canvasTools.handleZoomIn}
+          onZoomOut={canvasTools.handleZoomOut}
+          onFitToScreen={canvasTools.handleFitToScreen}
+          selectedComponent={canvasTools.selectedComponent}
+        />
 
-        <div className="flex items-center gap-1">
-          <Button variant="tool" size="tool" title="Zoom Out">
-            <ZoomOut className="h-4 w-4" />
-          </Button>
-          <span className="text-xs text-muted-foreground px-2 min-w-[50px] text-center">
-            100%
-          </span>
-          <Button variant="tool" size="tool" title="Zoom In">
-            <ZoomIn className="h-4 w-4" />
-          </Button>
-          <Button variant="tool" size="tool" title="Fit to Screen">
-            <RotateCcw className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
+        {/* Canvas Area */}
+        <div className="flex-1 flex items-center justify-center p-8 bg-gradient-to-br from-muted/10 to-muted/30 overflow-auto">
+          {/* Canvas Container */}
+          <div className="relative" style={{ transform: `scale(${canvasTools.zoom / 100})` }}>
+            {/* Canvas Shadow/Frame */}
+            <div 
+              ref={canvasTools.canvasRef}
+              className="relative bg-canvas-bg border border-canvas-border shadow-strong rounded-lg overflow-hidden select-none"
+              style={{ 
+                width: canvasWidth, 
+                height: canvasHeight 
+              }}
+              onMouseMove={canvasTools.handleMouseMove}
+              onMouseUp={canvasTools.handleMouseUp}
+              onMouseLeave={canvasTools.handleMouseUp}
+              onClick={() => canvasTools.setSelectedComponent(null)}
+            >
+              {/* Background */}
+              {components.background && renderComponent('background', components.background)}
+              
+              {/* All other components */}
+              {Object.entries(components).map(([key, component]) => {
+                if (key === 'brochure_dimensions' || key === 'background') return null;
+                return renderComponent(key, component);
+              })}
+            </div>
 
-      {/* Canvas Area */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-gradient-to-br from-muted/10 to-muted/30 overflow-auto">
-        {/* Canvas Container */}
-        <div className="relative">
-          {/* Canvas Shadow/Frame */}
-          <div 
-            ref={canvasRef}
-            className="relative bg-canvas-bg border border-canvas-border shadow-strong rounded-lg overflow-hidden select-none"
-            style={{ 
-              width: canvasWidth, 
-              height: canvasHeight 
-            }}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
-          >
-            {/* Background */}
-            {components.background && (
-              <div
-                className="absolute"
-                style={{
-                  left: components.background.position[0],
-                  top: components.background.position[1],
-                  width: components.background.size[0],
-                  height: components.background.size[1],
-                }}
-              >
-                <img
-                  src={`data:image/${components.background.format};base64,${components.background.image_base64}`}
-                  alt="Background"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            )}
-
-            {/* Product Image */}
-            {components.product_image && (
-              <div
-                className={`absolute border-2 border-primary/20 hover:border-primary transition-all duration-200 cursor-move rounded group ${
-                  dragState.dragComponent === 'product_image' ? 'border-primary shadow-lg z-10' : ''
-                }`}
-                style={{
-                  left: getComponentPosition('product_image')[0],
-                  top: getComponentPosition('product_image')[1],
-                  width: components.product_image.size[0],
-                  height: components.product_image.size[1],
-                }}
-                onMouseDown={(e) => handleMouseDown(e, 'product_image')}
-              >
-                <img
-                  src={`data:image/${components.product_image.format};base64,${components.product_image.image_base64}`}
-                  alt="Product"
-                  className="w-full h-full object-cover rounded"
-                />
-                {/* Selection Handles */}
-                <div className="absolute -top-1 -left-1 w-3 h-3 bg-primary border-2 border-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary border-2 border-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="absolute -bottom-1 -left-1 w-3 h-3 bg-primary border-2 border-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-primary border-2 border-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
-              </div>
-            )}
-
-            {/* Arabic Text */}
-            {components.arabic_text && (
-              <div
-                className={`absolute border-2 border-accent/20 hover:border-accent transition-all duration-200 cursor-move rounded group ${
-                  dragState.dragComponent === 'arabic_text' ? 'border-accent shadow-lg z-10' : ''
-                }`}
-                style={{
-                  left: getComponentPosition('arabic_text')[0],
-                  top: getComponentPosition('arabic_text')[1],
-                  width: components.arabic_text.size[0],
-                  height: components.arabic_text.size[1],
-                }}
-                onMouseDown={(e) => handleMouseDown(e, 'arabic_text')}
-              >
-                <img
-                  src={`data:image/${components.arabic_text.format};base64,${components.arabic_text.image_base64}`}
-                  alt="Arabic Text"
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute -top-1 -left-1 w-3 h-3 bg-accent border-2 border-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-accent border-2 border-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
-              </div>
-            )}
-
-            {/* English Text */}
-            {components.english_text && (
-              <div
-                className={`absolute border-2 border-accent/20 hover:border-accent transition-all duration-200 cursor-move rounded group ${
-                  dragState.dragComponent === 'english_text' ? 'border-accent shadow-lg z-10' : ''
-                }`}
-                style={{
-                  left: getComponentPosition('english_text')[0],
-                  top: getComponentPosition('english_text')[1],
-                  width: components.english_text.size[0],
-                  height: components.english_text.size[1],
-                }}
-                onMouseDown={(e) => handleMouseDown(e, 'english_text')}
-              >
-                <img
-                  src={`data:image/${components.english_text.format};base64,${components.english_text.image_base64}`}
-                  alt="English Text"
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute -top-1 -left-1 w-3 h-3 bg-accent border-2 border-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-accent border-2 border-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
-              </div>
-            )}
-
-            {/* Price Tag */}
-            {components.price_tag && (
-              <div
-                className={`absolute border-2 border-success/20 hover:border-success transition-all duration-200 cursor-move rounded-full group ${
-                  dragState.dragComponent === 'price_tag' ? 'border-success shadow-lg z-10' : ''
-                }`}
-                style={{
-                  left: getComponentPosition('price_tag')[0],
-                  top: getComponentPosition('price_tag')[1],
-                  width: components.price_tag.size[0],
-                  height: components.price_tag.size[1],
-                }}
-                onMouseDown={(e) => handleMouseDown(e, 'price_tag')}
-              >
-                <img
-                  src={`data:image/${components.price_tag.format};base64,${components.price_tag.image_base64}`}
-                  alt="Price Tag"
-                  className="w-full h-full object-cover rounded-full"
-                />
-                <div className="absolute -top-1 -left-1 w-3 h-3 bg-success border-2 border-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-success border-2 border-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
-              </div>
-            )}
-
-            {/* Icon */}
-            {components.icon && (
-              <div
-                className={`absolute border-2 border-secondary/40 hover:border-secondary transition-all duration-200 cursor-move rounded-full group ${
-                  dragState.dragComponent === 'icon' ? 'border-secondary shadow-lg z-10' : ''
-                }`}
-                style={{
-                  left: getComponentPosition('icon')[0],
-                  top: getComponentPosition('icon')[1],
-                  width: components.icon.size[0],
-                  height: components.icon.size[1],
-                }}
-                onMouseDown={(e) => handleMouseDown(e, 'icon')}
-              >
-                <img
-                  src={`data:image/${components.icon.format};base64,${components.icon.image_base64}`}
-                  alt="Icon"
-                  className="w-full h-full object-cover rounded-full"
-                />
-                <div className="absolute -top-1 -left-1 w-3 h-3 bg-secondary border-2 border-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-secondary border-2 border-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
-              </div>
-            )}
-          </div>
-
-          {/* Canvas Info */}
-          <div className="absolute -bottom-8 left-0 right-0 flex justify-center">
-            <Badge variant="outline" className="bg-background/80 backdrop-blur-sm text-xs">
-              Brochure Canvas • {canvasWidth}×{canvasHeight}px
-            </Badge>
+            {/* Canvas Info */}
+            <div className="absolute -bottom-8 left-0 right-0 flex justify-center">
+              <Badge variant="outline" className="bg-background/80 backdrop-blur-sm text-xs">
+                Brochure Canvas • {canvasWidth}×{canvasHeight}px • {canvasTools.zoom}%
+              </Badge>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Property Panel */}
+      <PropertyPanel
+        selectedComponent={canvasTools.selectedComponent}
+        componentProperties={canvasTools.componentProperties}
+        onUpdateProperty={canvasTools.updateComponentProperty}
+        onUpdateTextProperty={canvasTools.updateTextProperty}
+        onDeleteComponent={canvasTools.deleteComponent}
+        onDuplicateComponent={canvasTools.duplicateComponent}
+      />
     </div>
   );
 };
