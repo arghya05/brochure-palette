@@ -283,8 +283,8 @@ export const BrochureDesigner: React.FC = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="tool" size="sm" onClick={loadProductData} className="flex-1">
+                <div className="space-y-2">
+                  <Button variant="tool" size="sm" onClick={loadProductData} className="w-full">
                     <RefreshCw className="h-4 w-4" />
                     Load Data
                   </Button>
@@ -293,14 +293,14 @@ export const BrochureDesigner: React.FC = () => {
                     size="sm" 
                     onClick={loadComponents}
                     disabled={loading || !selectedConfig || !selectedSku}
-                    className="flex-1"
+                    className="w-full"
                   >
                     {loading ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
                       <Image className="h-4 w-4" />
                     )}
-                    Load Components
+                    <span className="truncate">Load Components</span>
                   </Button>
                 </div>
               </div>
