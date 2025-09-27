@@ -4,8 +4,14 @@ import { Badge } from '@/components/ui/badge';
 import { Image as ImageIcon } from 'lucide-react';
 import type { BrochureComponents, BrochureConfig } from '@/types/api';
 import { useCanvasTools } from '@/hooks/useCanvasTools';
+import { useGridSystem } from '@/hooks/useGridSystem';
 import { PropertyPanel } from './PropertyPanel';
 import { ToolPanel } from './ToolPanel';
+import { AlignmentPanel } from './AlignmentPanel';
+import { LayoutManager } from './LayoutManager';
+import { AdvancedToolbar } from './AdvancedToolbar';
+import { GridControls } from './GridControls';
+import { KeyboardShortcuts } from './KeyboardShortcuts';
 
 interface BrochureCanvasProps {
   components: BrochureComponents | null;
@@ -15,6 +21,7 @@ interface BrochureCanvasProps {
 
 export const BrochureCanvas: React.FC<BrochureCanvasProps> = ({ components, config, onLayoutChange }) => {
   const canvasTools = useCanvasTools();
+  const gridSystem = useGridSystem();
   
   // Initialize component properties when components change
   useEffect(() => {
@@ -57,6 +64,12 @@ export const BrochureCanvas: React.FC<BrochureCanvasProps> = ({ components, conf
   // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Grid shortcut
+      if (e.key.toLowerCase() === 'g' && !e.ctrlKey && !e.metaKey) {
+        gridSystem.setShowGrid(!gridSystem.showGrid);
+        return;
+      }
+
       // Tool shortcuts
       switch (e.key.toLowerCase()) {
         case 'v':
@@ -91,7 +104,7 @@ export const BrochureCanvas: React.FC<BrochureCanvasProps> = ({ components, conf
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [canvasTools]);
+  }, [canvasTools, gridSystem]);
 
   const renderComponent = (componentName: string, component: any) => {
     if (!component || !('position' in component)) return null;
@@ -238,11 +251,95 @@ export const BrochureCanvas: React.FC<BrochureCanvasProps> = ({ components, conf
           onZoomOut={canvasTools.handleZoomOut}
           onFitToScreen={canvasTools.handleFitToScreen}
           selectedComponent={canvasTools.selectedComponent}
+          canUndo={canvasTools.canUndo}
+          canRedo={canvasTools.canRedo}
+          onUndo={canvasTools.undo}
+          onRedo={canvasTools.redo}
+        />
+
+        {/* Alignment Panel */}
+        <AlignmentPanel
+          selectedComponent={canvasTools.selectedComponent}
+          components={components}
+          onAlignComponent={(alignment) => canvasTools.alignComponent(alignment, components!)}
+          onCenterComponent={() => canvasTools.centerComponent(components!)}
+          onCopyComponent={canvasTools.copyComponent}
+          onPasteComponent={canvasTools.pasteComponent}
+          canPaste={!!canvasTools.copiedComponent}
+        />
+
+        {/* Layout Manager */}
+        <div className="bg-panel-bg border-b border-panel-border p-2 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <LayoutManager
+              componentPositions={canvasTools.componentPositions}
+              componentSizes={canvasTools.componentSizes}
+              componentProperties={canvasTools.componentProperties}
+              onLoadLayout={canvasTools.loadLayoutData}
+            />
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <GridControls
+              showGrid={gridSystem.showGrid}
+              onToggleGrid={gridSystem.setShowGrid}
+              snapToGrid={gridSystem.snapToGrid}
+              onToggleSnap={gridSystem.setSnapToGrid}
+              gridSize={gridSystem.gridSize}
+              onGridSizeChange={gridSystem.setGridSize}
+            />
+            <KeyboardShortcuts />
+          </div>
+        </div>
+
+        {/* Advanced Toolbar */}
+        <AdvancedToolbar
+          selectedComponent={canvasTools.selectedComponent}
+          onBringToFront={() => {
+            // Placeholder for layer management
+            console.log('Bring to front');
+          }}
+          onSendToBack={() => {
+            // Placeholder for layer management
+            console.log('Send to back');
+          }}
+          onToggleVisibility={() => {
+            if (canvasTools.selectedComponent) {
+              const currentProps = canvasTools.componentProperties[canvasTools.selectedComponent];
+              canvasTools.updateComponentProperty(
+                canvasTools.selectedComponent,
+                'visible',
+                !currentProps?.visible
+              );
+            }
+          }}
+          onToggleLock={() => {
+            // Placeholder for lock functionality
+            console.log('Toggle lock');
+          }}
+          onGroupComponents={() => {
+            // Placeholder for grouping
+            console.log('Group components');
+          }}
+          onUngroupComponents={() => {
+            // Placeholder for ungrouping
+            console.log('Ungroup components');
+          }}
+          onFlipHorizontal={() => {
+            // Placeholder for flip
+            console.log('Flip horizontal');
+          }}
+          isComponentVisible={
+            canvasTools.selectedComponent
+              ? canvasTools.componentProperties[canvasTools.selectedComponent]?.visible ?? true
+              : true
+          }
+          isComponentLocked={false} // Placeholder
         />
 
         {/* Canvas Area */}
         <div className="flex-1 flex items-center justify-center p-8 bg-gradient-to-br from-muted/10 to-muted/30 overflow-auto">
-          {/* Canvas Container */}
+            {/* Canvas Container */}
           <div className="relative" style={{ transform: `scale(${canvasTools.zoom / 100})` }}>
             {/* Canvas Shadow/Frame */}
             <div 
@@ -262,6 +359,9 @@ export const BrochureCanvas: React.FC<BrochureCanvasProps> = ({ components, conf
                 }
               }}
             >
+              {/* Grid */}
+              {gridSystem.renderGrid(canvasWidth, canvasHeight)}
+              
               {/* Background */}
               {components.background && renderComponent('background', components.background)}
               

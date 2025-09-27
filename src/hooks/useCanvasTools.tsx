@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import type { BrochureComponents } from '@/types/api';
+import { useCanvasHistory } from './useCanvasHistory';
 
 export type CanvasToolType = 'select' | 'draw' | 'rectangle' | 'circle' | 'text';
 
@@ -55,8 +56,15 @@ export const useCanvasTools = () => {
   const [componentPositions, setComponentPositions] = useState<Record<string, [number, number]>>({});
   const [componentSizes, setComponentSizes] = useState<Record<string, [number, number]>>({});
   const [componentProperties, setComponentProperties] = useState<Record<string, ComponentProperties>>({});
+  const [copiedComponent, setCopiedComponent] = useState<{
+    name: string;
+    position: [number, number];
+    size: [number, number];
+    properties: ComponentProperties;
+  } | null>(null);
 
   const canvasRef = useRef<HTMLDivElement>(null);
+  const history = useCanvasHistory();
 
   // Helper functions
   const setActiveTool = (tool: CanvasToolType) => setCanvasState(prev => ({ ...prev, activeTool: tool }));
@@ -261,6 +269,40 @@ export const useCanvasTools = () => {
   }, [componentPositions]);
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.ctrlKey || e.metaKey) {
+      switch (e.key.toLowerCase()) {
+        case 'z':
+          e.preventDefault();
+          if (e.shiftKey) {
+            const state = history.redo();
+            if (state) {
+              setComponentPositions(state.componentPositions);
+              setComponentSizes(state.componentSizes);
+              setComponentProperties(state.componentProperties);
+            }
+          } else {
+            const state = history.undo();
+            if (state) {
+              setComponentPositions(state.componentPositions);
+              setComponentSizes(state.componentSizes);
+              setComponentProperties(state.componentProperties);
+            }
+          }
+          break;
+        case 'c':
+          if (canvasState.selectedComponent) {
+            e.preventDefault();
+            copyComponent();
+          }
+          break;
+        case 'v':
+          e.preventDefault();
+          pasteComponent();
+          break;
+      }
+      return;
+    }
+
     if (!canvasState.selectedComponent) return;
     
     switch (e.key) {
@@ -272,7 +314,122 @@ export const useCanvasTools = () => {
         setSelectedComponent(null);
         break;
     }
-  }, [canvasState.selectedComponent, deleteComponent]);
+  }, [canvasState.selectedComponent, deleteComponent, history]);
+
+  const alignComponent = useCallback((alignment: string, components: BrochureComponents) => {
+    if (!canvasState.selectedComponent || !components) return;
+
+    const canvasWidth = components.brochure_dimensions[0];
+    const canvasHeight = components.brochure_dimensions[1];
+    const currentPos = getComponentPosition(canvasState.selectedComponent, components);
+    const currentSize = getComponentSize(canvasState.selectedComponent, components);
+
+    let newPos = [...currentPos] as [number, number];
+
+    switch (alignment) {
+      case 'left':
+        newPos[0] = 0;
+        break;
+      case 'center-h':
+        newPos[0] = (canvasWidth - currentSize[0]) / 2;
+        break;
+      case 'right':
+        newPos[0] = canvasWidth - currentSize[0];
+        break;
+      case 'top':
+        newPos[1] = 0;
+        break;
+      case 'center-v':
+        newPos[1] = (canvasHeight - currentSize[1]) / 2;
+        break;
+      case 'bottom':
+        newPos[1] = canvasHeight - currentSize[1];
+        break;
+    }
+
+    setComponentPositions(prev => ({
+      ...prev,
+      [canvasState.selectedComponent!]: newPos
+    }));
+
+    history.saveState(componentPositions, componentSizes, componentProperties);
+  }, [canvasState.selectedComponent, getComponentPosition, getComponentSize, componentPositions, componentSizes, componentProperties, history]);
+
+  const centerComponent = useCallback((components: BrochureComponents) => {
+    if (!canvasState.selectedComponent || !components) return;
+
+    const canvasWidth = components.brochure_dimensions[0];
+    const canvasHeight = components.brochure_dimensions[1];
+    const currentSize = getComponentSize(canvasState.selectedComponent, components);
+
+    const newPos: [number, number] = [
+      (canvasWidth - currentSize[0]) / 2,
+      (canvasHeight - currentSize[1]) / 2
+    ];
+
+    setComponentPositions(prev => ({
+      ...prev,
+      [canvasState.selectedComponent!]: newPos
+    }));
+
+    history.saveState(componentPositions, componentSizes, componentProperties);
+  }, [canvasState.selectedComponent, getComponentSize, componentPositions, componentSizes, componentProperties, history]);
+
+  const copyComponent = useCallback(() => {
+    if (!canvasState.selectedComponent) return;
+
+    const position = componentPositions[canvasState.selectedComponent] || [0, 0];
+    const size = componentSizes[canvasState.selectedComponent] || [100, 100];
+    const properties = componentProperties[canvasState.selectedComponent] || {
+      opacity: 1,
+      rotation: 0,
+      visible: true
+    };
+
+    setCopiedComponent({
+      name: canvasState.selectedComponent,
+      position,
+      size,
+      properties
+    });
+  }, [canvasState.selectedComponent, componentPositions, componentSizes, componentProperties]);
+
+  const pasteComponent = useCallback(() => {
+    if (!copiedComponent) return;
+
+    const newName = `${copiedComponent.name}_copy_${Date.now()}`;
+    const offset = 20;
+
+    setComponentPositions(prev => ({
+      ...prev,
+      [newName]: [copiedComponent.position[0] + offset, copiedComponent.position[1] + offset]
+    }));
+
+    setComponentSizes(prev => ({
+      ...prev,
+      [newName]: copiedComponent.size
+    }));
+
+    setComponentProperties(prev => ({
+      ...prev,
+      [newName]: { ...copiedComponent.properties }
+    }));
+
+    setSelectedComponent(newName);
+    history.saveState(componentPositions, componentSizes, componentProperties);
+  }, [copiedComponent, componentPositions, componentSizes, componentProperties, history]);
+
+  const loadLayoutData = useCallback((data: {
+    componentPositions: Record<string, [number, number]>;
+    componentSizes: Record<string, [number, number]>;
+    componentProperties: Record<string, ComponentProperties>;
+  }) => {
+    setComponentPositions(data.componentPositions);
+    setComponentSizes(data.componentSizes);
+    setComponentProperties(data.componentProperties);
+    setSelectedComponent(null);
+    history.saveState(data.componentPositions, data.componentSizes, data.componentProperties);
+  }, [history]);
 
   return {
     // State
@@ -285,6 +442,7 @@ export const useCanvasTools = () => {
     componentSizes,
     componentProperties,
     canvasRef,
+    copiedComponent,
     
     // Actions
     setActiveTool,
@@ -303,6 +461,34 @@ export const useCanvasTools = () => {
     handleZoomIn: () => setCanvasState(prev => ({ ...prev, zoom: Math.min(prev.zoom + 25, 200) })),
     handleZoomOut: () => setCanvasState(prev => ({ ...prev, zoom: Math.max(prev.zoom - 25, 25) })),
     handleFitToScreen: () => setCanvasState(prev => ({ ...prev, zoom: 100 })),
-    handleKeyDown
+    handleKeyDown,
+    
+    // New features
+    alignComponent,
+    centerComponent,
+    copyComponent,
+    pasteComponent,
+    loadLayoutData,
+    
+    // History
+    canUndo: history.canUndo,
+    canRedo: history.canRedo,
+    undo: () => {
+      const state = history.undo();
+      if (state) {
+        setComponentPositions(state.componentPositions);
+        setComponentSizes(state.componentSizes);
+        setComponentProperties(state.componentProperties);
+      }
+    },
+    redo: () => {
+      const state = history.redo();
+      if (state) {
+        setComponentPositions(state.componentPositions);
+        setComponentSizes(state.componentSizes);
+        setComponentProperties(state.componentProperties);
+      }
+    },
+    saveHistoryState: () => history.saveState(componentPositions, componentSizes, componentProperties)
   };
 };

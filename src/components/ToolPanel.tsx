@@ -11,7 +11,9 @@ import {
   ZoomOut, 
   RotateCcw,
   MousePointer,
-  Pencil
+  Pencil,
+  Undo,
+  Redo
 } from 'lucide-react';
 import type { CanvasToolType } from '@/hooks/useCanvasTools';
 
@@ -23,6 +25,10 @@ interface ToolPanelProps {
   onZoomOut: () => void;
   onFitToScreen: () => void;
   selectedComponent: string | null;
+  canUndo: boolean;
+  canRedo: boolean;
+  onUndo: () => void;
+  onRedo: () => void;
 }
 
 export const ToolPanel: React.FC<ToolPanelProps> = ({
@@ -33,6 +39,10 @@ export const ToolPanel: React.FC<ToolPanelProps> = ({
   onZoomOut,
   onFitToScreen,
   selectedComponent,
+  canUndo,
+  canRedo,
+  onUndo,
+  onRedo,
 }) => {
   const tools = [
     { id: 'select' as CanvasToolType, icon: MousePointer, label: 'Select', shortcut: 'V' },
@@ -77,8 +87,32 @@ export const ToolPanel: React.FC<ToolPanelProps> = ({
         </Badge>
       </div>
 
-      {/* Right Section - Zoom Controls */}
+      {/* Right Section - History & Zoom Controls */}
       <div className="flex items-center gap-1">
+        {/* History Controls */}
+        <Button
+          variant="tool"
+          size="tool"
+          onClick={onUndo}
+          title="Undo (Ctrl+Z)"
+          disabled={!canUndo}
+        >
+          <Undo className="h-4 w-4" />
+        </Button>
+        
+        <Button
+          variant="tool"
+          size="tool"
+          onClick={onRedo}
+          title="Redo (Ctrl+Shift+Z)"
+          disabled={!canRedo}
+        >
+          <Redo className="h-4 w-4" />
+        </Button>
+        
+        <Separator orientation="vertical" className="h-6 mx-1" />
+        
+        {/* Zoom Controls */}
         <Button
           variant="tool"
           size="tool"
