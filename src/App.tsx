@@ -3,9 +3,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { BrochureDesigner } from "@/components/BrochureDesigner";
+import { CanvaLayout } from "@/components/CanvaLayout";
 import { ImageGenerationAgent } from "@/components/ImageGenerationAgent";
-import { Navigation } from "@/components/Navigation";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -17,7 +16,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<BrochureDesigner />} />
+          <Route path="/" element={<CanvaLayout />} />
           <Route path="/image-generation" element={<ImageGenerationAgent />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

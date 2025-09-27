@@ -1,0 +1,240 @@
+import React, { useState, useEffect } from 'react';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { toast } from '@/hooks/use-toast';
+import { apiService } from '@/services/api';
+import type { BrochureConfig, BrochureData, BrochureComponents } from '@/types/api';
+import { AppSidebar } from './AppSidebar';
+import { CanvaTopbar } from './CanvaTopbar';
+import { BrochureCanvas } from './BrochureCanvas';
+
+export const CanvaLayout: React.FC = () => {
+  const [configurations, setConfigurations] = useState<BrochureConfig[]>([]);
+  const [selectedConfig, setSelectedConfig] = useState<string>('');
+  const [productData, setProductData] = useState<BrochureData[]>([]);
+  const [selectedSku, setSelectedSku] = useState<string>('');
+  const [components, setComponents] = useState<BrochureComponents | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [generating, setGenerating] = useState(false);
+
+  // Combined brochure settings
+  const [combinedSettings, setCombinedSettings] = useState({
+    rows: 3,
+    cols: 4,
+    width: 400,
+    height: 600,
+    spacing: 2,
+  });
+
+  useEffect(() => {
+    loadInitialData();
+  }, []);
+
+  const loadInitialData = async () => {
+    try {
+      setLoading(true);
+      await Promise.all([
+        loadConfigurations(),
+        loadProductData(),
+      ]);
+    } catch (error) {
+      console.error('Error loading initial data:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load initial data',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadConfigurations = async () => {
+    try {
+      const configs = await apiService.getConfigurations();
+      setConfigurations(configs);
+      if (configs.length > 0 && !selectedConfig) {
+        setSelectedConfig(configs[0].id);
+      }
+    } catch (error) {
+      console.error('Error loading configurations:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load configurations',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const loadProductData = async () => {
+    try {
+      const response = await apiService.getAllData();
+      setProductData(response.data);
+    } catch (error) {
+      console.error('Error loading product data:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load product data',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const loadComponents = async () => {
+    if (!selectedConfig || !selectedSku) {
+      toast({
+        title: 'Missing Selection',
+        description: 'Please select both a configuration and SKU',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const selectedProduct = productData.find(p => p.sku === selectedSku);
+      if (!selectedProduct) return;
+
+      const componentsData = await apiService.extractComponents(selectedConfig, selectedProduct);
+      setComponents(componentsData);
+      
+      toast({
+        title: 'Success',
+        description: 'Components loaded successfully!',
+        variant: 'default',
+      });
+    } catch (error) {
+      console.error('Error loading components:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load components',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const generateSingleBrochure = async () => {
+    if (!selectedConfig || !selectedSku) {
+      toast({
+        title: 'Missing Selection',
+        description: 'Please select both a configuration and SKU',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      setGenerating(true);
+      const selectedProduct = productData.find(p => p.sku === selectedSku);
+      if (!selectedProduct) return;
+
+      await apiService.generateBrochure({
+        config_id: selectedConfig,
+        data: [selectedProduct],
+        output_format: 'png',
+        return_components: false,
+      });
+
+      toast({
+        title: 'Success',
+        description: 'Brochure generated successfully!',
+        variant: 'default',
+      });
+    } catch (error) {
+      console.error('Error generating brochure:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to generate brochure',
+        variant: 'destructive',
+      });
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const generateCombinedBrochure = async () => {
+    if (!selectedConfig || productData.length === 0) {
+      toast({
+        title: 'Missing Data',
+        description: 'Please select a configuration and ensure product data is loaded',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      setGenerating(true);
+      await apiService.generateCombinedBrochure({
+        config_id: selectedConfig,
+        data: productData.slice(0, combinedSettings.rows * combinedSettings.cols),
+        rows: combinedSettings.rows,
+        cols: combinedSettings.cols,
+        brochure_width: combinedSettings.width,
+        brochure_height: combinedSettings.height,
+        spacing: combinedSettings.spacing,
+        output_format: 'png',
+      });
+
+      toast({
+        title: 'Success',
+        description: 'Combined brochure generated successfully!',
+        variant: 'default',
+      });
+    } catch (error) {
+      console.error('Error generating combined brochure:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to generate combined brochure',
+        variant: 'destructive',
+      });
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const currentConfig = configurations.find(c => c.id === selectedConfig);
+
+  return (
+    <SidebarProvider>
+      <div className="min-h-screen w-full flex flex-col bg-background">
+        {/* Top Bar */}
+        <CanvaTopbar 
+          selectedConfig={selectedConfig}
+          selectedSku={selectedSku}
+          configName={currentConfig?.name}
+        />
+
+        {/* Main Layout */}
+        <div className="flex flex-1 w-full">
+          {/* Sidebar */}
+          <AppSidebar
+            configurations={configurations}
+            selectedConfig={selectedConfig}
+            setSelectedConfig={setSelectedConfig}
+            productData={productData}
+            selectedSku={selectedSku}
+            setSelectedSku={setSelectedSku}
+            combinedSettings={combinedSettings}
+            setCombinedSettings={setCombinedSettings}
+            loading={loading}
+            generating={generating}
+            onLoadConfigurations={loadConfigurations}
+            onLoadProductData={loadProductData}
+            onLoadComponents={loadComponents}
+            onGenerateSingle={generateSingleBrochure}
+            onGenerateCombined={generateCombinedBrochure}
+          />
+
+          {/* Canvas Area */}
+          <main className="flex-1 bg-muted/30 overflow-hidden">
+            <BrochureCanvas 
+              components={components}
+              config={currentConfig}
+            />
+          </main>
+        </div>
+      </div>
+    </SidebarProvider>
+  );
+};

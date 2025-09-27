@@ -331,7 +331,7 @@ export const ImageGenerationAgent: React.FC = () => {
             {/* Generate Button */}
             <Button 
               variant="gradient" 
-              size="xl" 
+              size="xl"
               onClick={generateImage}
               disabled={generating || selectedProducts.length === 0 || !formData.style_prompt.trim()}
               className="w-full"
