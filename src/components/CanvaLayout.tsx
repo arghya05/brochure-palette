@@ -67,8 +67,12 @@ export const CanvaLayout: React.FC = () => {
 
   const loadProductData = async () => {
     try {
+      console.log('Loading product data...');
       const response = await apiService.getAllData();
+      console.log('Product data response:', response);
+      console.log('Product data array:', response.data);
       setProductData(response.data);
+      console.log('Product data state set to:', response.data);
     } catch (error) {
       console.error('Error loading product data:', error);
       toast({

@@ -27,6 +27,9 @@ interface AppSidebarProps {
 }
 
 export const AppSidebar: React.FC<AppSidebarProps> = (props) => {
+  console.log('AppSidebar productData:', props.productData);
+  console.log('AppSidebar productData length:', props.productData?.length);
+  
   const [collapsed, setCollapsed] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState({
     config: true,
