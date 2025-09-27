@@ -157,6 +157,91 @@ export const BrochureDesigner: React.FC = () => {
     }
   };
 
+  const createNewConfiguration = async () => {
+    const configName = prompt('Enter configuration name:');
+    if (!configName?.trim()) return;
+
+    try {
+      // Create a default configuration template
+      const newConfig: Omit<BrochureConfig, 'id' | 'created_at'> = {
+        name: configName.trim(),
+        fonts: {
+          arabic_regular_size: 16,
+          arabic_bold_size: 18,
+          english_regular_size: 14,
+          english_bold_size: 16,
+          english_bold_price_strike_size: 12,
+          english_bold_price_size: 14,
+        },
+        dimensions: { width: 400, height: 600 },
+        grid: { cols: 1, rows: 1, spacing: 10 },
+        text: {
+          arabic_x: 50,
+          arabic_y_offset: 100,
+          arabic_max_width: 300,
+          arabic_color: [0, 0, 0],
+          english_x: 50,
+          english_y_offset: 150,
+          english_max_width: 300,
+          english_color: [0, 0, 0],
+        },
+        product_image: {
+          max_width: 200,
+          max_height: 200,
+          center_x_offset: 0,
+          center_y_offset: 0,
+        },
+        price_tag: {
+          width: 80,
+          height: 30,
+          x_offset: 10,
+          y_offset: 10,
+          corner_radius: 5,
+          background_color: [255, 255, 255],
+          regular_price_x_offset: 5,
+          regular_price_y_offset: 5,
+          regular_price_color: [128, 128, 128],
+          strike_line_color: [255, 0, 0],
+          strike_line_width: 2,
+          promo_price_x_offset: 5,
+          promo_price_y_offset: 15,
+          promo_price_color: [255, 0, 0],
+        },
+        icon: {
+          size: 40,
+          x_offset: 20,
+          y_offset: 20,
+          background_circle_radius_offset: 5,
+          background_color: [240, 240, 240],
+          border_color: [200, 200, 200],
+          border_width: 2,
+        },
+        background_color: [255, 255, 255],
+        grid_background_color: [245, 245, 245],
+      };
+
+      const createdConfig = await apiService.createConfiguration(newConfig);
+      
+      toast({
+        title: 'Success',
+        description: `Configuration "${configName}" created successfully`,
+        variant: 'default',
+      });
+
+      // Refresh configurations and select the new one
+      await loadConfigurations();
+      setSelectedConfig(createdConfig.id);
+      
+    } catch (error) {
+      console.error('Error creating configuration:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to create configuration',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const generateCombinedBrochure = async () => {
     if (!selectedConfig || productData.length === 0) {
       toast({
@@ -254,7 +339,7 @@ export const BrochureDesigner: React.FC = () => {
                     <RefreshCw className="h-4 w-4" />
                     Refresh
                   </Button>
-                  <Button variant="gradient" size="sm" className="flex-1">
+                  <Button variant="gradient" size="sm" className="flex-1" onClick={createNewConfiguration}>
                     New Config
                   </Button>
                 </div>
