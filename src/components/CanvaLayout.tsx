@@ -136,6 +136,40 @@ export const CanvaLayout: React.FC = () => {
     }
   };
 
+  // Transform components to API layout format
+  const transformComponentsToLayout = (components: BrochureComponents | null) => {
+    if (!components) return undefined;
+    
+    const layout: Record<string, any> = {};
+    
+    Object.entries(components).forEach(([key, component]) => {
+      if (key === 'brochure_dimensions') return; // Skip dimensions
+      
+      if (component && typeof component === 'object' && 'position' in component) {
+        layout[key] = {
+          x: component.position[0],
+          y: component.position[1],
+          width: component.size[0],
+          height: component.size[1],
+          opacity: 1,
+          rotation: 0,
+          visible: true,
+        };
+        
+        // Add text properties for text components
+        if (key.includes('text')) {
+          layout[key].textProperties = {
+            maxWidth: 16,
+            fontSize: 24,
+            color: "#231f20"
+          };
+        }
+      }
+    });
+    
+    return layout;
+  };
+
   const generateSingleBrochure = async () => {
     if (!selectedConfig || !selectedSku) {
       toast({
@@ -151,15 +185,16 @@ export const CanvaLayout: React.FC = () => {
       const selectedProduct = productData.find(p => p.sku === selectedSku);
       if (!selectedProduct) return;
 
-      // Use modified components if available for generation
+      // Transform modified components to API layout format
       const componentsToUse = modifiedComponents || components;
+      const layoutData = transformComponentsToLayout(componentsToUse);
 
       await apiService.generateBrochure({
         config_id: selectedConfig,
         data: [selectedProduct],
         output_format: 'png',
         return_components: false,
-        layout: componentsToUse, // Pass modified layout using existing API property
+        layout: layoutData,
       });
 
       toast({
@@ -192,8 +227,9 @@ export const CanvaLayout: React.FC = () => {
     try {
       setGenerating(true);
       
-      // Use modified components if available for generation
+      // Transform modified components to API layout format
       const componentsToUse = modifiedComponents || components;
+      const layoutData = transformComponentsToLayout(componentsToUse);
       
       await apiService.generateCombinedBrochure({
         config_id: selectedConfig,
@@ -204,7 +240,7 @@ export const CanvaLayout: React.FC = () => {
         brochure_height: combinedSettings.height,
         spacing: combinedSettings.spacing,
         output_format: 'png',
-        layout: componentsToUse, // Pass modified layout using existing API property
+        layout: layoutData,
       });
 
       toast({
