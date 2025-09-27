@@ -85,7 +85,14 @@ export const AppSidebar: React.FC<AppSidebarProps> = (props) => {
                 <Button variant="tool" size="sm" onClick={props.onLoadConfigurations}>
                   <RefreshCw className="h-3 w-3" />
                 </Button>
-                <Button variant="primary" size="sm">New</Button>
+                <Button variant="primary" size="sm" onClick={() => {
+                  // Create new configuration functionality
+                  const newConfigName = prompt('Enter configuration name:');
+                  if (newConfigName?.trim()) {
+                    // This would integrate with API to create new config
+                    console.log('Creating new config:', newConfigName.trim());
+                  }
+                }}>New</Button>
               </div>
             </div>
           )}

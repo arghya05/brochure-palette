@@ -26,6 +26,7 @@ export const useLayoutManager = () => {
       timestamp: Date.now()
     };
 
+    // Save both as layout and as config
     const saved = JSON.parse(localStorage.getItem('canvasLayouts') || '[]');
     const existing = saved.findIndex((l: LayoutData) => l.name === name);
     
@@ -36,7 +37,19 @@ export const useLayoutManager = () => {
     }
     
     localStorage.setItem('canvasLayouts', JSON.stringify(saved));
-    toast.success(`Layout "${name}" saved successfully`);
+    
+    // Also save as configuration for brochure designer
+    const configs = JSON.parse(localStorage.getItem('brochureConfigs') || '[]');
+    const configLayout = {
+      id: `config_${Date.now()}`,
+      name: `Config: ${name}`,
+      layout: layout,
+      timestamp: Date.now()
+    };
+    configs.push(configLayout);
+    localStorage.setItem('brochureConfigs', JSON.stringify(configs));
+    
+    toast.success(`Layout "${name}" saved as configuration`);
   }, []);
 
   const loadLayout = useCallback((name: string) => {

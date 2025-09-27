@@ -194,37 +194,33 @@ export const ImageGenerationLayout: React.FC = () => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen w-full flex flex-col bg-background">
-        {/* Top Bar */}
-        <CanvaTopbar 
-          selectedConfig=""
-          selectedSku={selectedProducts[0]?.sku || ''}
-          configName="AI Image Generation"
+      <div className="min-h-screen w-full flex bg-background">
+        <ImageGenerationSidebar
+          productData={productData}
+          selectedProducts={selectedProducts}
+          generationType={generationType}
+          imageSettings={imageSettings}
+          combinedSettings={combinedSettings}
+          loading={loading}
+          generating={generating}
+          onAddProduct={addProduct}
+          onRemoveProduct={removeProduct}
+          onClearProducts={clearProducts}
+          onGenerationTypeChange={setGenerationType}
+          onImageSettingsChange={setImageSettings}
+          onCombinedSettingsChange={setCombinedSettings}
+          onLoadProductData={loadProductData}
+          onGenerateSingle={generateSingleImage}
+          onGenerateCombined={generateCombinedImage}
         />
 
-        {/* Main Layout */}
-        <div className="flex flex-1 w-full">
-          {/* Sidebar */}
-          <ImageGenerationSidebar
-            productData={productData}
-            selectedProducts={selectedProducts}
-            generationType={generationType}
-            imageSettings={imageSettings}
-            combinedSettings={combinedSettings}
-            loading={loading}
-            generating={generating}
-            onAddProduct={addProduct}
-            onRemoveProduct={removeProduct}
-            onClearProducts={clearProducts}
-            onGenerationTypeChange={setGenerationType}
-            onImageSettingsChange={setImageSettings}
-            onCombinedSettingsChange={setCombinedSettings}
-            onLoadProductData={loadProductData}
-            onGenerateSingle={generateSingleImage}
-            onGenerateCombined={generateCombinedImage}
+        <div className="flex flex-col flex-1 w-full">
+          <CanvaTopbar 
+            selectedConfig=""
+            selectedSku={selectedProducts[0]?.sku || ''}
+            configName="AI Image Generation"
           />
 
-          {/* Canvas Area */}
           <main className="flex-1 bg-muted/30 overflow-hidden">
             <ImageGenerationCanvas 
               generatedImage={generatedImage}

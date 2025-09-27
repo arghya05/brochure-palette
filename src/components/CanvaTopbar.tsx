@@ -71,39 +71,18 @@ export const CanvaTopbar: React.FC<CanvaTopbarProps> = ({
         </Button>
       </div>
 
-      {/* Right Section - Status & Actions */}
-      <div className="flex items-center gap-3">
-        {/* Current Status */}
-        <div className="flex items-center gap-2 text-sm">
-          {selectedConfig && (
-            <Badge variant="secondary" className="text-xs">
-              {configName || selectedConfig}
-            </Badge>
-          )}
-          {selectedSku && (
-            <Badge variant="outline" className="text-xs">
-              SKU: {selectedSku}
-            </Badge>
-          )}
-        </div>
-        
-        <Separator orientation="vertical" className="h-6" />
-        
-        {/* Actions */}
-        <div className="flex items-center gap-1">
-          <Button variant="tool" size="sm" className="h-8">
-            <Play className="h-4 w-4" />
-            Preview
-          </Button>
-          <Button variant="tool" size="sm" className="h-8">
-            <Download className="h-4 w-4" />
-            Export
-          </Button>
-          <Button variant="primary" size="sm" className="h-8">
-            <Share2 className="h-4 w-4" />
-            Share
-          </Button>
-        </div>
+      {/* Right Section - Status */}
+      <div className="flex items-center gap-2">
+        {selectedConfig && (
+          <Badge variant="secondary" className="text-xs">
+            {configName || selectedConfig}
+          </Badge>
+        )}
+        {selectedSku && (
+          <Badge variant="outline" className="text-xs">
+            SKU: {selectedSku}
+          </Badge>
+        )}
       </div>
     </header>
   );

@@ -12,6 +12,7 @@ import { LayoutManager } from './LayoutManager';
 import { AdvancedToolbar } from './AdvancedToolbar';
 import { GridControls } from './GridControls';
 import { KeyboardShortcuts } from './KeyboardShortcuts';
+import { DrawingTools } from './DrawingTools';
 
 interface BrochureCanvasProps {
   components: BrochureComponents | null;
@@ -358,18 +359,25 @@ export const BrochureCanvas: React.FC<BrochureCanvasProps> = ({ components, conf
                   canvasTools.setSelectedComponent(null);
                 }
               }}
-            >
-              {/* Grid */}
-              {gridSystem.renderGrid(canvasWidth, canvasHeight)}
-              
-              {/* Background */}
-              {components.background && renderComponent('background', components.background)}
-              
-              {/* All other components */}
-              {Object.entries(components).map(([key, component]) => {
-                if (key === 'brochure_dimensions' || key === 'background') return null;
-                return renderComponent(key, component);
-              })}
+             >
+               {/* Grid */}
+               {gridSystem.renderGrid(canvasWidth, canvasHeight)}
+               
+               {/* Drawing Tools */}
+               <DrawingTools
+                 activeTool={canvasTools.activeTool}
+                 canvasRef={canvasTools.canvasRef}
+                 onCreateComponent={canvasTools.createComponent}
+               />
+               
+               {/* Background */}
+               {components.background && renderComponent('background', components.background)}
+               
+               {/* All other components */}
+               {Object.entries(components).map(([key, component]) => {
+                 if (key === 'brochure_dimensions' || key === 'background') return null;
+                 return renderComponent(key, component);
+               })}
             </div>
 
             {/* Canvas Info */}

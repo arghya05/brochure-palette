@@ -2,7 +2,7 @@ import { useState, useCallback, useRef } from 'react';
 import type { BrochureComponents } from '@/types/api';
 import { useCanvasHistory } from './useCanvasHistory';
 
-export type CanvasToolType = 'select' | 'draw' | 'rectangle' | 'circle' | 'text';
+export type CanvasToolType = 'select' | 'draw' | 'rectangle' | 'circle' | 'text' | 'path';
 
 export interface ComponentProperties {
   opacity: number;
@@ -419,6 +419,39 @@ export const useCanvasTools = () => {
     history.saveState(componentPositions, componentSizes, componentProperties);
   }, [copiedComponent, componentPositions, componentSizes, componentProperties, history]);
 
+  const createComponent = useCallback((type: string, position: [number, number], size: [number, number]) => {
+    const newName = `${type}_${Date.now()}`;
+    
+    setComponentPositions(prev => ({
+      ...prev,
+      [newName]: position
+    }));
+
+    setComponentSizes(prev => ({
+      ...prev,
+      [newName]: size
+    }));
+
+    setComponentProperties(prev => ({
+      ...prev,
+      [newName]: {
+        opacity: 1,
+        rotation: 0,
+        visible: true,
+        ...(type === 'text' && {
+          textProperties: {
+            fontSize: 16,
+            color: '#000000',
+            maxWidth: size[0]
+          }
+        })
+      }
+    }));
+
+    setSelectedComponent(newName);
+    history.saveState(componentPositions, componentSizes, componentProperties);
+  }, [componentPositions, componentSizes, componentProperties, history]);
+
   const loadLayoutData = useCallback((data: {
     componentPositions: Record<string, [number, number]>;
     componentSizes: Record<string, [number, number]>;
@@ -489,6 +522,9 @@ export const useCanvasTools = () => {
         setComponentProperties(state.componentProperties);
       }
     },
-    saveHistoryState: () => history.saveState(componentPositions, componentSizes, componentProperties)
+    saveHistoryState: () => history.saveState(componentPositions, componentSizes, componentProperties),
+    
+    // Drawing tools
+    createComponent
   };
 };

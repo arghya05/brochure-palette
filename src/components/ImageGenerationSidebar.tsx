@@ -116,9 +116,7 @@ export const ImageGenerationSidebar: React.FC<ImageGenerationSidebarProps> = ({
   const canGenerate = selectedProducts.length > 0 && imageSettings.style_prompt.trim();
 
   return (
-    <Sidebar className="w-80 border-r border-border">
-      <SidebarTrigger className="m-2 self-end" />
-      
+    <Sidebar className="min-w-80 border-r border-border">
       <SidebarContent className="p-4 space-y-6">
         {/* Generation Type Selector */}
         <SidebarGroup>
