@@ -65,6 +65,7 @@ export const BrochureCanvas: React.FC<BrochureCanvasProps> = ({ components, conf
     if (!component || !('position' in component)) return null;
     
     const position = canvasTools.getComponentPosition(componentName, components!);
+    const size = canvasTools.getComponentSize(componentName, components!);
     const properties = canvasTools.componentProperties[componentName] || {
       opacity: 1,
       rotation: 0,
@@ -108,11 +109,11 @@ export const BrochureCanvas: React.FC<BrochureCanvasProps> = ({ components, conf
         style={{
           left: position[0],
           top: position[1],
-          width: component.size[0],
-          height: component.size[1],
+          width: size[0],
+          height: size[1],
           opacity: properties.opacity,
           transform: `rotate(${properties.rotation}deg)`,
-          zIndex: isDragging ? 20 : isSelected ? 10 : 1,
+          zIndex: isDragging || canvasTools.resizeState.isResizing ? 20 : isSelected ? 10 : 1,
         }}
         onMouseDown={(e) => {
           e.stopPropagation(); // Prevent canvas deselection
@@ -135,6 +136,28 @@ export const BrochureCanvas: React.FC<BrochureCanvasProps> = ({ components, conf
             <div className={`absolute -top-1 -right-1 w-3 h-3 bg-primary border-2 border-white rounded-full transition-opacity`} />
             <div className={`absolute -bottom-1 -left-1 w-3 h-3 bg-primary border-2 border-white rounded-full transition-opacity`} />
             <div className={`absolute -bottom-1 -right-1 w-3 h-3 bg-primary border-2 border-white rounded-full transition-opacity`} />
+          </>
+        )}
+        
+        {/* Resize Handles */}
+        {isSelected && !['arabic_text', 'english_text'].includes(componentName) && (
+          <>
+            <div 
+              className="absolute -top-2 -left-2 w-4 h-4 bg-accent border-2 border-white rounded cursor-nw-resize hover:bg-accent/80"
+              onMouseDown={(e) => canvasTools.handleResizeMouseDown(e, componentName, 'nw', components!)}
+            />
+            <div 
+              className="absolute -top-2 -right-2 w-4 h-4 bg-accent border-2 border-white rounded cursor-ne-resize hover:bg-accent/80"
+              onMouseDown={(e) => canvasTools.handleResizeMouseDown(e, componentName, 'ne', components!)}
+            />
+            <div 
+              className="absolute -bottom-2 -left-2 w-4 h-4 bg-accent border-2 border-white rounded cursor-sw-resize hover:bg-accent/80"
+              onMouseDown={(e) => canvasTools.handleResizeMouseDown(e, componentName, 'sw', components!)}
+            />
+            <div 
+              className="absolute -bottom-2 -right-2 w-4 h-4 bg-accent border-2 border-white rounded cursor-se-resize hover:bg-accent/80"
+              onMouseDown={(e) => canvasTools.handleResizeMouseDown(e, componentName, 'se', components!)}
+            />
           </>
         )}
         

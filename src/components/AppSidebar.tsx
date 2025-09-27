@@ -130,6 +130,100 @@ export const AppSidebar: React.FC<AppSidebarProps> = (props) => {
 
         <Separator />
 
+        {/* Combined Brochure Settings */}
+        <div className="space-y-3">
+          <Button onClick={() => toggleGroup('combined')} variant="ghost" className="w-full justify-between p-2">
+            <div className="flex items-center gap-2">
+              <Grid3X3 className="h-4 w-4 text-primary" />
+              {!collapsed && <span className="font-medium">Combined Settings</span>}
+            </div>
+            {!collapsed && (expandedGroups.combined ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />)}
+          </Button>
+          
+          {!collapsed && expandedGroups.combined && (
+            <div className="pl-2 space-y-3">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-xs">Rows</Label>
+                  <Input
+                    type="number"
+                    value={props.combinedSettings.rows}
+                    onChange={(e) => props.setCombinedSettings({
+                      ...props.combinedSettings,
+                      rows: parseInt(e.target.value) || 1
+                    })}
+                    className="h-8 text-xs"
+                    min="1"
+                    max="10"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Cols</Label>
+                  <Input
+                    type="number"
+                    value={props.combinedSettings.cols}
+                    onChange={(e) => props.setCombinedSettings({
+                      ...props.combinedSettings,
+                      cols: parseInt(e.target.value) || 1
+                    })}
+                    className="h-8 text-xs"
+                    min="1"
+                    max="10"
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-xs">Width</Label>
+                  <Input
+                    type="number"
+                    value={props.combinedSettings.width}
+                    onChange={(e) => props.setCombinedSettings({
+                      ...props.combinedSettings,
+                      width: parseInt(e.target.value) || 100
+                    })}
+                    className="h-8 text-xs"
+                    min="100"
+                    max="2000"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Height</Label>
+                  <Input
+                    type="number"
+                    value={props.combinedSettings.height}
+                    onChange={(e) => props.setCombinedSettings({
+                      ...props.combinedSettings,
+                      height: parseInt(e.target.value) || 100
+                    })}
+                    className="h-8 text-xs"
+                    min="100"
+                    max="2000"
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <Label className="text-xs">Spacing</Label>
+                <Input
+                  type="number"
+                  value={props.combinedSettings.spacing}
+                  onChange={(e) => props.setCombinedSettings({
+                    ...props.combinedSettings,
+                    spacing: parseInt(e.target.value) || 0
+                  })}
+                  className="h-8 text-xs"
+                  min="0"
+                  max="50"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        <Separator />
+
         {/* Generation */}
         <div className="space-y-3">
           <Button onClick={() => toggleGroup('generate')} variant="ghost" className="w-full justify-between p-2">
