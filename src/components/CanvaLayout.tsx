@@ -69,10 +69,26 @@ export const CanvaLayout: React.FC = () => {
     try {
       console.log('Loading product data...');
       const response = await apiService.getAllData();
-      console.log('Product data response:', response);
-      console.log('Product data array:', response.data);
-      setProductData(response.data);
-      console.log('Product data state set to:', response.data);
+      console.log('Raw API response:', response);
+      
+      // Map raw data to BrochureData format (like in script.js)
+      const mappedData: BrochureData[] = response.data.map((item: any) => ({
+        sku: item['SKU']?.toString() || '',
+        arabic_description: item['Items Description (Arabic)'] || '',
+        english_description: item['Items Description (Englsih)'] || '',
+        regular_price: item['Regular Retail Z1']?.toString() || '',
+        promo_price: item['PROMO1 Retail Z1']?.toString() || '',
+        icon_name: item['SELLA RICE ']?.toString() || ''
+      }));
+      
+      console.log('Mapped product data:', mappedData);
+      setProductData(mappedData);
+      
+      toast({
+        title: 'Success',
+        description: `Loaded ${mappedData.length} products successfully`,
+        variant: 'default',
+      });
     } catch (error) {
       console.error('Error loading product data:', error);
       toast({
