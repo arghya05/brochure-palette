@@ -136,43 +136,43 @@ export const useLayoutManager = () => {
     componentProperties: Record<string, ComponentProperties>
   ) => {
     try {
-      // Import the API service dynamically to avoid circular dependencies
-      const { apiService } = await import('@/services/api');
-      
-      // Convert layout data to BrochureConfig format
+      // Convert actual layout data to BrochureConfig format
       const config = {
         name,
         fonts: {
-          arabic_regular_size: 16,
-          arabic_bold_size: 18,
-          english_regular_size: 14,
-          english_bold_size: 16,
-          english_bold_price_strike_size: 12,
-          english_bold_price_size: 14,
+          arabic_regular_size: componentProperties.arabicText?.textProperties?.fontSize || 16,
+          arabic_bold_size: (componentProperties.arabicText?.textProperties?.fontSize || 16) + 2,
+          english_regular_size: componentProperties.englishText?.textProperties?.fontSize || 14,
+          english_bold_size: (componentProperties.englishText?.textProperties?.fontSize || 14) + 2,
+          english_bold_price_strike_size: componentProperties.priceText?.textProperties?.fontSize || 12,
+          english_bold_price_size: (componentProperties.priceText?.textProperties?.fontSize || 12) + 2,
         },
-        dimensions: { width: 400, height: 600 },
+        dimensions: { 
+          width: componentSizes.canvas?.[0] || 400, 
+          height: componentSizes.canvas?.[1] || 600 
+        },
         grid: { cols: 1, rows: 1, spacing: 10 },
         text: {
-          arabic_x: 50,
-          arabic_y_offset: 100,
-          arabic_max_width: 300,
+          arabic_x: componentPositions.arabicText?.[0] || 50,
+          arabic_y_offset: componentPositions.arabicText?.[1] || 100,
+          arabic_max_width: componentProperties.arabicText?.textProperties?.maxWidth || 300,
           arabic_color: [0, 0, 0] as [number, number, number],
-          english_x: 50,
-          english_y_offset: 150,
-          english_max_width: 300,
+          english_x: componentPositions.englishText?.[0] || 50,
+          english_y_offset: componentPositions.englishText?.[1] || 150,
+          english_max_width: componentProperties.englishText?.textProperties?.maxWidth || 300,
           english_color: [0, 0, 0] as [number, number, number],
         },
         product_image: {
-          max_width: 200,
-          max_height: 200,
-          center_x_offset: 0,
-          center_y_offset: 0,
+          max_width: componentSizes.productImage?.[0] || 200,
+          max_height: componentSizes.productImage?.[1] || 200,
+          center_x_offset: componentPositions.productImage?.[0] || 0,
+          center_y_offset: componentPositions.productImage?.[1] || 0,
         },
         price_tag: {
-          width: 80,
-          height: 30,
-          x_offset: 10,
-          y_offset: 10,
+          width: componentSizes.priceTag?.[0] || 80,
+          height: componentSizes.priceTag?.[1] || 30,
+          x_offset: componentPositions.priceTag?.[0] || 10,
+          y_offset: componentPositions.priceTag?.[1] || 10,
           corner_radius: 5,
           background_color: [255, 255, 255] as [number, number, number],
           regular_price_x_offset: 5,
@@ -185,9 +185,9 @@ export const useLayoutManager = () => {
           promo_price_color: [255, 0, 0] as [number, number, number],
         },
         icon: {
-          size: 40,
-          x_offset: 20,
-          y_offset: 20,
+          size: componentSizes.icon?.[0] || 40,
+          x_offset: componentPositions.icon?.[0] || 20,
+          y_offset: componentPositions.icon?.[1] || 20,
           background_circle_radius_offset: 5,
           background_color: [240, 240, 240] as [number, number, number],
           border_color: [200, 200, 200] as [number, number, number],
@@ -197,8 +197,16 @@ export const useLayoutManager = () => {
         grid_background_color: [245, 245, 245] as [number, number, number],
       };
 
-      // Create the configuration via API
-      await apiService.createConfiguration(config);
+      // Create the configuration via API using direct fetch
+      const response = await fetch(`http://localhost:8000/configurations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(config)
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to create configuration: ${response.statusText}`);
+      }
       
       // Also save the layout data for reference
       const layout: LayoutData = {
